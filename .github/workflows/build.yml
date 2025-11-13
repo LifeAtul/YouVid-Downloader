@@ -68,15 +68,17 @@ jobs:
     # BUILD EXE
     # -----------------------------
     - name: Build EXE
+      shell: pwsh
       run: |
         cd app
-        pyinstaller --noconsole --onefile --windowed ^
-          --add-binary "../ffmpeg/ffmpeg.exe;ffmpeg" ^
-          --add-binary "../ffmpeg/ffprobe.exe;ffmpeg" ^
-          --add-binary "../ytdlp/yt-dlp.exe;ytdlp" ^
-          --add-data "resources;resources" ^
-          --icon "resources/icon.ico" ^
+        pyinstaller --noconsole --onefile --windowed `
+          --add-binary ../ffmpeg/ffmpeg.exe:ffmpeg `
+          --add-binary ../ffmpeg/ffprobe.exe:ffmpeg `
+          --add-binary ../ytdlp/yt-dlp.exe:ytdlp `
+          --add-data resources:resources `
+          --icon resources/icon.ico `
           youtube_downloader.py
+
 
     # -----------------------------
     # RELEASE
