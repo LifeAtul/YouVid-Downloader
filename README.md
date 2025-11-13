@@ -36,6 +36,28 @@ Download single videos, playlists, and large batches — all in a clean, dark UI
 
 ---
 
+## 📥 Download & Install
+
+🔰 Option 1 — Download Prebuilt EXE (Recommended)
+
+You do NOT need Python, ffmpeg, or yt-dlp.
+
+Go to the Releases page:
+👉 https://github.com/LifeAtul/YouTube-Downloader/releases
+
+Download the latest file:
+youtube_downloader.exe
+
+Run it — that’s all.
+
+✔ ffmpeg is bundled
+✔ yt-dlp is bundled
+✔ No installation required
+✔ No console window
+✔ Auto-update included
+
+---
+
 ## 📦 Install (Run from Source)
 
 ```bash
@@ -61,12 +83,7 @@ YouTube-Downloader/app/
 Run:
 
 ```bash
-pyinstaller --noconsole --onefile --windowed ^
-  --add-data "../ffmpeg;ffmpeg" ^
-  --add-data "../ytdlp;ytdlp" ^
-  --add-data "resources;resources" ^
-  --icon "resources/icon.ico" ^
-  youtube_downloader.py
+pyinstaller --noconsole --onefile --windowed --add-data "../ffmpeg;ffmpeg" --add-data "../ytdlp;ytdlp" --add-data "resources;resources" --icon "resources/icon.ico" youtube_downloader.py
 ```
 
 Your EXE will appear here:
@@ -169,4 +186,3 @@ Planned features for future releases:
 ---
 
 <p align="center">Made with ❤️ by Life</p>
-```
