@@ -1,144 +1,172 @@
-🎵 YouTube Downloader – Modern UI
-By Life • MIT License
 
-A beautiful, modern, Spotify-style YouTube downloader with:
+<h1 align="center">🎵 YouTube Downloader – Modern UI</h1>
+<p align="center"><b>By Life • MIT License</b></p>
 
-Single video download
+<p align="center">
+A beautiful, modern, Spotify-style YouTube downloader built with CustomTkinter.<br/>
+Download single videos, playlists, and large batches — all in a clean, dark UI.
+</p>
 
-Playlist download
+---
 
-Batch URL download
+## 📸 Screenshots
 
-Audio-only mode (mp3/m4a)
+<p align="center">
+  <img src="screenshots/ui.png" width="30%" />
+  <img src="screenshots/playlist.png" width="30%" />
+  <img src="screenshots/batch.png" width="30%" />
+</p>
 
-Dark/Light themes
+---
 
-Auto-update yt-dlp
+## ✨ Features
 
-No console popups
+✔ Modern CustomTkinter black theme  
+✔ No console windows  
+✔ Single, batch, and playlist modes  
+✔ Drag & drop support (coming soon)  
+✔ Auto-update `yt-dlp`  
+✔ Batch progress per item  
+✔ Playlist progress  
+✔ Audio extraction (m4a/mp3)  
+✔ Windows EXE auto-build via GitHub Actions  
+✔ Feather icon included  
+✔ Fully MIT-licensed  
+✔ 100% offline standalone EXE support (PyInstaller)  
 
-Full ffmpeg support
+---
 
-100% offline standalone EXE support (PyInstaller)
+## 📦 Install (Run from Source)
 
-📸 Screenshots
-Modern UI	Playlist	Batch
-
-	
-	
-✨ Features
-
-✔ Modern CustomTkinter black theme
-✔ No console windows
-✔ Single, batch, and playlist modes
-✔ Drag & drop incoming support
-✔ Auto-update yt-dlp
-✔ Progress per item (batch/playlist)
-✔ Audio extraction (m4a/mp3)
-✔ Windows EXE auto-build via GitHub Actions
-✔ Feather icon included
-✔ MIT license
-
-📦 Install (Run from Source)
+```bash
 pip install customtkinter requests pillow tqdm
+````
 
+Run the app:
 
-Run:
-
+```bash
 python app/youtube_downloader.py
+```
 
-🖥 Build Standalone EXE (PyInstaller)
+---
+
+## 🖥 Build Standalone EXE (PyInstaller)
 
 Go to:
 
+```
 YouTube-Downloader/app/
-
+```
 
 Run:
 
+```bash
 pyinstaller --noconsole --onefile --windowed ^
   --add-data "../ffmpeg;ffmpeg" ^
   --add-data "../ytdlp;ytdlp" ^
   --add-data "resources;resources" ^
   --icon "resources/icon.ico" ^
   youtube_downloader.py
+```
 
+Your EXE will appear here:
 
-Final EXE will appear in:
-
+```
 app/dist/youtube_downloader.exe
-
+```
 
 Place it next to:
 
+```
 ffmpeg/
 ytdlp/
+```
 
-🚀 Automatic GitHub Release Builds
+---
 
-Every push to main creates:
+## 🚀 Automatic GitHub Release Builds
 
-Windows EXE
+Every push to `main` triggers:
 
-Tagged version under "Releases"
+* Automated Windows EXE build
+* Version tagging
+* New release creation
+* Logs & artifacts stored in GitHub Actions
 
-Build logs
+Workflow file:
 
-Workflow is inside:
-
+```
 .github/workflows/build.yml
+```
 
-🧩 Requirements
+---
 
-See requirements.txt.
+## 🧩 Requirements
 
-🎨 Customization
+See `requirements.txt`:
 
-Themes: Dark / Light
+```
+customtkinter
+requests
+pillow
+tqdm
+```
 
-Logo: replace app/resources/logo.png
+---
 
-Icon: replace app/resources/icon.ico
+## 🎨 Customization
 
-ffmpeg auto-download (coming soon)
+* Theme: Dark / Light
+* Replace logo:
+  `app/resources/logo.png`
+* Replace app icon:
+  `app/resources/icon.ico`
+* ffmpeg auto-download: (coming in future updates)
 
-❤️ Credits
+---
 
-This project uses:
+## ❤️ Credits
 
-Component	License	Link
-yt-dlp	MIT	https://github.com/yt-dlp/yt-dlp
+This project uses the following open-source tools:
 
-FFmpeg	LGPL/GPL	https://ffmpeg.org
-
-CustomTkinter	MIT	https://github.com/TomSchimansky/CustomTkinter
-
-Pillow	PIL License	https://python-pillow.org
+| Component         | License     | Link                                                                                             |
+| ----------------- | ----------- | ------------------------------------------------------------------------------------------------ |
+| **yt-dlp**        | MIT         | [https://github.com/yt-dlp/yt-dlp](https://github.com/yt-dlp/yt-dlp)                             |
+| **FFmpeg**        | LGPL/GPL    | [https://ffmpeg.org](https://ffmpeg.org)                                                         |
+| **CustomTkinter** | MIT         | [https://github.com/TomSchimansky/CustomTkinter](https://github.com/TomSchimansky/CustomTkinter) |
+| **Pillow (PIL)**  | PIL License | [https://python-pillow.org](https://python-pillow.org)                                           |
 
 Special thanks to the open-source community.
 
-📄 License
+---
 
-This project is licensed under the MIT License.
-See LICENSE for details.
+## 📄 License
 
-🤝 Contributing
+This project is licensed under the **MIT License**.
+See [`LICENSE`](LICENSE) for full details.
 
-Pull requests welcomed!
-See CONTRIBUTING.md.
+---
 
-🧭 Project Roadmap
+## 🤝 Contributing
 
-Future releases will include:
+Pull requests are welcome!
+To contribute, see [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
-Drag & drop support
+---
 
-Built-in ffmpeg updater
+## 🧭 Project Roadmap
 
-Built-in yt-dlp auto setup
+Planned features for future releases:
 
-System tray mini-downloader
+* Drag & drop support
+* Built-in ffmpeg updater
+* Built-in yt-dlp auto setup
+* System tray mini-downloader
+* Resume failed downloads
+* Advanced format selection panel
+* Audio/video quality picker
 
-Resume failed downloads
+---
 
-Advanced format selection
+<p align="center">Made with ❤️ by Life</p>
+```
