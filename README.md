@@ -1,10 +1,49 @@
-
 <h1 align="center">🎵 YouTube Downloader – Modern UI</h1>
 <p align="center"><b>By Life • MIT License</b></p>
 
 <p align="center">
 A beautiful, modern, Spotify-style YouTube downloader built with CustomTkinter.<br/>
 Download single videos, playlists, and large batches — all in a clean, dark UI.
+</p>
+
+---
+
+<!-- BADGES -->
+<p align="center">
+
+<a href="https://github.com/LifeAtul/YouTube-Downloader/releases/latest">
+  <img src="https://img.shields.io/github/v/release/LifeAtul/YouTube-Downloader?color=%2300ff99&label=Latest%20Version&style=for-the-badge">
+</a>
+
+<a href="https://github.com/LifeAtul/YouTube-Downloader/stargazers">
+  <img src="https://img.shields.io/github/stars/LifeAtul/YouTube-Downloader?color=yellow&style=for-the-badge">
+</a>
+
+<a href="https://github.com/LifeAtul/YouTube-Downloader">
+  <img src="https://img.shields.io/github/downloads/LifeAtul/YouTube-Downloader/total?color=%2300c8ff&style=for-the-badge">
+</a>
+
+<a href="LICENSE">
+  <img src="https://img.shields.io/github/license/LifeAtul/YouTube-Downloader?style=for-the-badge&color=brightgreen">
+</a>
+
+<a href="https://www.python.org/">
+  <img src="https://img.shields.io/badge/Python-3.11-blue?style=for-the-badge">
+</a>
+
+<a href="https://github.com/LifeAtul/YouTube-Downloader/actions">
+  <img src="https://img.shields.io/github/actions/workflow/status/LifeAtul/YouTube-Downloader/build.yml?style=for-the-badge&label=Build">
+</a>
+
+</p>
+
+---
+
+<!-- DOWNLOAD BUTTON -->
+<p align="center">
+  <a href="https://github.com/LifeAtul/YouTube-Downloader/releases/latest">
+    <img src="https://img.shields.io/badge/⬇%20Download%20Latest%20Release-00ff99?style=for-the-badge&logo=github" />
+  </a>
 </p>
 
 ---
