@@ -58,12 +58,7 @@ jobs:
       - name: Build EXE
         run: |
           cd app
-          pyinstaller --noconsole --onefile --windowed ^
-            --add-data "../ffmpeg;ffmpeg" ^
-            --add-data "../ytdlp;ytdlp" ^
-            --add-data "resources;resources" ^
-            --icon "resources/icon.ico" ^
-            youtube_downloader.py
+          pyinstaller --noconsole --onefile --windowed --add-data "../ffmpeg;ffmpeg" --add-data "../ytdlp;ytdlp" --add-data "resources;resources" --icon "resources/icon.ico" youtube_downloader.py
 
       # -------------------------------
       # UPLOAD TO RELEASE
