@@ -61,12 +61,7 @@ YouTube-Downloader/app/
 Run:
 
 ```bash
-pyinstaller --noconsole --onefile --windowed ^
-  --add-data "../ffmpeg;ffmpeg" ^
-  --add-data "../ytdlp;ytdlp" ^
-  --add-data "resources;resources" ^
-  --icon "resources/icon.ico" ^
-  youtube_downloader.py
+pyinstaller --noconsole --onefile --windowed --add-data "../ffmpeg;ffmpeg" --add-data "../ytdlp;ytdlp" --add-data "resources;resources" --icon "resources/icon.ico" youtube_downloader.py
 ```
 
 Your EXE will appear here:
@@ -169,4 +164,3 @@ Planned features for future releases:
 ---
 
 <p align="center">Made with ❤️ by Life</p>
-```
