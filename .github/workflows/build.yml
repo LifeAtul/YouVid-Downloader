@@ -6,70 +6,86 @@ permissions:
 on:
   push:
     branches: ["main"]
-  pull_request:
-    branches: ["main"]
 
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
 
-      - name: Install Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
+    # -----------------------------
+    # CHECKOUT CODE
+    # -----------------------------
+    - name: Checkout Code
+      uses: actions/checkout@v3
 
-      - name: Install Dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install pyinstaller
+    # -----------------------------
+    # PYTHON
+    # -----------------------------
+    - name: Install Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
 
-      # -------------------------------
-      # DOWNLOAD YT-DLP
-      # -------------------------------
-      - name: Download yt-dlp.exe
-        run: |
-          mkdir ytdlp
-          curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe -o ytdlp/yt-dlp.exe
+    - name: Install Dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install pyinstaller
 
-      # -------------------------------
-      # DOWNLOAD AND EXTRACT FFMPEG
-      # -------------------------------
-      - name: Download FFmpeg
-        run: |
-          curl -L https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip -o ffmpeg.zip
+    # -----------------------------
+    # DOWNLOAD yt-dlp
+    # -----------------------------
+    - name: Download yt-dlp.exe
+      run: |
+        mkdir ytdlp
+        curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe -o ytdlp/yt-dlp.exe
 
-          # Extract zip
-          powershell -command "Expand-Archive ffmpeg.zip -DestinationPath ffmpeg_temp"
+    # -----------------------------
+    # DOWNLOAD + EXTRACT FFMPEG
+    # -----------------------------
+    - name: Download FFmpeg
+      shell: pwsh
+      run: |
+        curl -L https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip -o ffmpeg.zip
 
-          # Create final ffmpeg folder
-          mkdir ffmpeg
+        # Extract to temp folder
+        Expand-Archive ffmpeg.zip -DestinationPath ffmpeg_temp
 
-          # Copy bin files from extracted folder to ffmpeg/
-          powershell -command "Get-ChildItem ffmpeg_temp -Directory | Select-Object -First 1 | ForEach-Object { Copy-Item \"$($_.FullName)\bin\*\" ffmpeg -Recurse -Force }"
+        # Create final ffmpeg directory
+        mkdir ffmpeg
 
-          # Cleanup
-          Remove-Item ffmpeg_temp -Recurse -Force
-          Remove-Item ffmpeg.zip -Force
+        # Find the extracted folder (dynamic!)
+        $folder = Get-ChildItem ffmpeg_temp | Where-Object { $_.PSIsContainer } | Select-Object -First 1
 
-      # -------------------------------
-      # BUILD EXE
-      # -------------------------------
-      - name: Build EXE
-        run: |
-          cd app
-          pyinstaller --noconsole --onefile --windowed --add-binary "../ffmpeg/ffmpeg.exe;ffmpeg" --add-binary "../ffmpeg/ffprobe.exe;ffmpeg" --add-binary "../ytdlp/yt-dlp.exe;ytdlp" --add-data "resources;resources" --icon "resources/icon.ico" youtube_downloader.py
-      # -------------------------------
-      # UPLOAD TO RELEASE
-      # -------------------------------
-      - name: Upload EXE to Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: app/dist/youtube_downloader.exe
-          tag_name: "v${{ github.run_number }}"
-          name: "YouTube Downloader v${{ github.run_number }}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Copy the bin folder
+        Copy-Item "$($folder.FullName)\bin\*" "ffmpeg" -Recurse -Force
+
+        # Cleanup
+        Remove-Item ffmpeg_temp -Recurse -Force
+        Remove-Item ffmpeg.zip -Force
+
+    # -----------------------------
+    # BUILD EXE
+    # -----------------------------
+    - name: Build EXE
+      run: |
+        cd app
+        pyinstaller --noconsole --onefile --windowed ^
+          --add-binary "../ffmpeg/ffmpeg.exe;ffmpeg" ^
+          --add-binary "../ffmpeg/ffprobe.exe;ffmpeg" ^
+          --add-binary "../ytdlp/yt-dlp.exe;ytdlp" ^
+          --add-data "resources;resources" ^
+          --icon "resources/icon.ico" ^
+          youtube_downloader.py
+
+    # -----------------------------
+    # RELEASE
+    # -----------------------------
+    - name: Upload EXE to Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: app/dist/youtube_downloader.exe
+        tag_name: "v${{ github.run_number }}"
+        name: "YouTube Downloader v${{ github.run_number }}"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
