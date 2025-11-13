@@ -33,17 +33,24 @@ jobs:
           curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe -o ytdlp/yt-dlp.exe
 
       # -------------------------------
-      # DOWNLOAD FFMPEG
+      # DOWNLOAD AND EXTRACT FFMPEG
       # -------------------------------
       - name: Download FFmpeg
         run: |
           curl -L https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip -o ffmpeg.zip
-          powershell -Command "Expand-Archive ffmpeg.zip -DestinationPath ffmpeg_temp"
-          REM Move extracted binaries to ffmpeg/
+
+          # Extract zip
+          powershell -command "Expand-Archive ffmpeg.zip -DestinationPath ffmpeg_temp"
+
+          # Create final ffmpeg folder
           mkdir ffmpeg
-          powershell -Command "Move-Item ffmpeg_temp\*\bin\* ffmpeg"
-          REM Cleanup
-          powershell -Command "Remove-Item ffmpeg_temp -Recurse -Force"
+
+          # Copy bin files from extracted folder to ffmpeg/
+          powershell -command "Get-ChildItem ffmpeg_temp -Directory | Select-Object -First 1 | ForEach-Object { Copy-Item \"$($_.FullName)\bin\*\" ffmpeg -Recurse -Force }"
+
+          # Cleanup
+          Remove-Item ffmpeg_temp -Recurse -Force
+          Remove-Item ffmpeg.zip -Force
 
       # -------------------------------
       # BUILD EXE
