@@ -24,11 +24,43 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
+      # -------------------------------
+      # DOWNLOAD YT-DLP
+      # -------------------------------
+      - name: Download yt-dlp.exe
+        run: |
+          mkdir ytdlp
+          curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe -o ytdlp/yt-dlp.exe
+
+      # -------------------------------
+      # DOWNLOAD FFMPEG
+      # -------------------------------
+      - name: Download FFmpeg
+        run: |
+          curl -L https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip -o ffmpeg.zip
+          powershell -Command "Expand-Archive ffmpeg.zip -DestinationPath ffmpeg_temp"
+          REM Move extracted binaries to ffmpeg/
+          mkdir ffmpeg
+          powershell -Command "Move-Item ffmpeg_temp\*\bin\* ffmpeg"
+          REM Cleanup
+          powershell -Command "Remove-Item ffmpeg_temp -Recurse -Force"
+
+      # -------------------------------
+      # BUILD EXE
+      # -------------------------------
       - name: Build EXE
         run: |
           cd app
-          pyinstaller --noconsole --onefile --windowed --add-data "../ffmpeg;ffmpeg" --add-data "../ytdlp;ytdlp" --add-data "resources;resources" --icon "resources/icon.ico" youtube_downloader.py
+          pyinstaller --noconsole --onefile --windowed ^
+            --add-data "../ffmpeg;ffmpeg" ^
+            --add-data "../ytdlp;ytdlp" ^
+            --add-data "resources;resources" ^
+            --icon "resources/icon.ico" ^
+            youtube_downloader.py
 
+      # -------------------------------
+      # UPLOAD TO RELEASE
+      # -------------------------------
       - name: Upload EXE to Release
         uses: softprops/action-gh-release@v1
         with:
