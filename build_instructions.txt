@@ -1,0 +1,166 @@
+========================================
+YOUTUBE DOWNLOADER – BUILD INSTRUCTIONS
+========================================
+
+This document explains EXACTLY how to build the
+YouTube Downloader EXE with the modern UI, playlist
+support, batch download support, and no terminal popups.
+
+----------------------------------------
+1) FOLDER STRUCTURE (VERY IMPORTANT)
+----------------------------------------
+
+Create the following structure:
+
+YouTube/
+│
+├── app/
+│   ├── youtube_downloader.py
+│   └── resources/
+│       └── icon.ico     (your feather icon)
+│
+├── ytdlp/
+│   └── yt-dlp.exe
+│
+├── ffmpeg/
+│   ├── ffmpeg.exe
+│   ├── ffprobe.exe
+│   └── ffplay.exe
+│
+└── build_instructions.txt
+
+
+IMPORTANT:
+- youtube_downloader.exe (the final EXE you will build)
+  MUST be placed inside this folder (next to ffmpeg/ & ytdlp/).
+
+----------------------------------------
+2) REQUIRED PYTHON PACKAGES
+----------------------------------------
+
+Install these ON THE MACHINE WHERE YOU BUILD:
+
+    pip install customtkinter requests pillow tqdm pyinstaller
+
+
+----------------------------------------
+3) BUILD THE EXE (PYINSTALLER COMMAND)
+----------------------------------------
+
+Open PowerShell inside:
+
+    YouTube/app/
+
+Run this EXACT command:
+
+    pyinstaller --noconsole --onefile --windowed --add-data "../ffmpeg;ffmpeg" --add-data "../ytdlp;ytdlp" --add-data "resources;resources" --icon "resources/icon.ico" youtube_downloader.py
+
+This will create:
+
+    YouTube/app/dist/youtube_downloader.exe
+
+
+----------------------------------------
+4) MOVE FINAL EXE TO ROOT FOLDER
+----------------------------------------
+
+Move the EXE from:
+
+    YouTube/app/dist/youtube_downloader.exe
+
+TO:
+
+    YouTube/youtube_downloader.exe
+
+
+----------------------------------------
+5) FINAL WORKING STRUCTURE
+----------------------------------------
+
+YouTube/
+│
+├── youtube_downloader.exe     <-- RUN THIS
+│
+├── ytdlp/
+│   └── yt-dlp.exe
+│
+├── ffmpeg/
+│   ├── ffmpeg.exe
+│   ├── ffprobe.exe
+│   └── ffplay.exe
+│
+└── app/
+    ├── youtube_downloader.py
+    └── resources/
+        └── icon.ico
+
+
+----------------------------------------
+6) HOW TO RUN IT
+----------------------------------------
+
+Just double-click:
+
+    YouTube/youtube_downloader.exe
+
+
+----------------------------------------
+7) WHY NO TERMINAL POPS UP?
+----------------------------------------
+
+The EXE uses:
+
+    --noconsole
+
+AND inside python we use:
+
+    creationflags = CREATE_NO_WINDOW
+
+So the downloader runs 100% silently in the background
+with NO popup console windows.
+
+
+----------------------------------------
+8) TROUBLESHOOTING
+----------------------------------------
+
+- If you see:
+    "yt-dlp.exe not found"
+  → Ensure youtube_downloader.exe sits NEXT TO /ytdlp/
+
+- If ffmpeg missing:
+  → Ensure ffmpeg.exe / ffprobe.exe / ffplay.exe are inside /ffmpeg/
+
+- If the app looks grey:
+  → You are running the OLD Tkinter version.
+    Make sure you're using the NEW CustomTkinter version.
+
+- If auto-update fails:
+  → Make sure you copied the final patched python file.
+
+
+----------------------------------------
+9) UPDATING YT-DLP
+----------------------------------------
+
+Click the button “Check yt-dlp” in the UI.
+It will download the latest yt-dlp version and replace
+the old one automatically.
+
+
+----------------------------------------
+10) REBUILDING AFTER EDITS
+----------------------------------------
+
+Each time you edit youtube_downloader.py,
+repeat:
+
+    cd YouTube/app
+    pyinstaller (same command as above)
+
+
+========================================
+END OF BUILD INSTRUCTIONS
+========================================
+
+
