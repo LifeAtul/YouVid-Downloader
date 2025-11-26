@@ -40,8 +40,17 @@ else:
 RES_DIR = os.path.join(BASE_DIR, "resources")
 ICON_PATH = os.path.join(RES_DIR, "icon.ico")
 
-YTDLP = os.path.join(REAL_BASE, "ytdlp", "yt-dlp.exe")
-FFMPEG = os.path.join(REAL_BASE, "ffmpeg", "ffmpeg.exe")
+def get_tool_path(rel_path):
+    # 1. Try bundled path (sys._MEIPASS)
+    bundled = os.path.join(BASE_DIR, rel_path)
+    if os.path.exists(bundled):
+        return bundled
+    # 2. Fallback to external path (next to EXE)
+    external = os.path.join(REAL_BASE, rel_path)
+    return external
+
+YTDLP = get_tool_path(os.path.join("ytdlp", "yt-dlp.exe"))
+FFMPEG = get_tool_path(os.path.join("ffmpeg", "ffmpeg.exe"))
 
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
 
