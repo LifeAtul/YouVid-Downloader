@@ -611,13 +611,17 @@ class DownloaderApp(ctk.CTk):
         # reset UI
         enqueue_ui(self.single_progress.set, 0.0)
         enqueue_ui(self.single_pct_label.configure, text="0%")
+        
         enqueue_ui(self.lbl_title.configure, text="Fetching info...")
         enqueue_ui(self.lbl_status.configure, text="Starting...")
         enqueue_ui(self.single_btn.configure, state="disabled")
         enqueue_ui(self.btn_cancel_single.configure, state="normal")
         enqueue_ui(self._append_log, f"Starting single download: {url}")
 
+        current_type = "video" if mode == "video" else "audio"
+
         def line_cb(line):
+            nonlocal current_type
             # 1. Parse Progress
             m = PERC_RE.search(line)
             if m:
@@ -633,6 +637,19 @@ class DownloaderApp(ctk.CTk):
                 # Extract filename as title proxy
                 try:
                     fname = line.split("Destination:", 1)[1].strip()
+                    # Determine type based on extension
+                    ext = os.path.splitext(fname)[1].lower()
+                    if ext in ['.m4a', '.mp3', '.opus', '.aac', '.wav']:
+                        current_type = "audio"
+                        enqueue_ui(self.lbl_status.configure, text="Downloading Audio...")
+                        # Reset progress for audio phase if we were doing video before
+                        # But yt-dlp usually outputs 0% at start of new file, so it might handle itself.
+                        # However, to be safe, we can force a reset if we detect a switch, but 
+                        # yt-dlp output is sequential.
+                    elif ext in ['.mp4', '.webm', '.mkv', '.avi', '.mov']:
+                        current_type = "video"
+                        enqueue_ui(self.lbl_status.configure, text="Downloading Video...")
+
                     # remove path and ext for cleaner look
                     fname = os.path.basename(fname)
                     fname = os.path.splitext(fname)[0]
@@ -647,12 +664,17 @@ class DownloaderApp(ctk.CTk):
             # 3. Parse Status
             if "[Merger]" in line:
                 enqueue_ui(self.lbl_status.configure, text="Merging Video & Audio...")
+                # Optional: set progress to indeterminate or 100%
+                enqueue_ui(self.single_progress.set, 1.0)
+                enqueue_ui(self.single_pct_label.configure, text="100%")
             elif "[ExtractAudio]" in line:
                 enqueue_ui(self.lbl_status.configure, text="Extracting Audio...")
             elif "[download]" in line and "100%" in line:
-                enqueue_ui(self.lbl_status.configure, text="Download Complete. Processing...")
+                # This happens at end of each file
+                pass
             elif "Destination" in line:
-                enqueue_ui(self.lbl_status.configure, text="Downloading...")
+                # Fallback
+                pass
 
             enqueue_ui(self._append_log, line.strip())
 
@@ -726,10 +748,9 @@ class DownloaderApp(ctk.CTk):
                 if m:
                     try:
                         pct = float(m.group(1))/100.0
-                        # set per-item progress scaled into batch overall
-                        overall = (idx - 1 + pct) / total
-                        enqueue_ui(self.batch_progress.set, overall)
-                        enqueue_ui(self.batch_pct_label.configure, text=f"{int(overall*100)}%")
+                        # Show current item progress directly
+                        enqueue_ui(self.batch_progress.set, pct)
+                        enqueue_ui(self.batch_pct_label.configure, text=f"{m.group(1)}%")
                     except:
                         pass
                 else:
@@ -746,8 +767,9 @@ class DownloaderApp(ctk.CTk):
             else:
                 enqueue_ui(self._append_log, f"[{idx}/{total}] Failed (code {rc}).")
             
-            enqueue_ui(self.batch_progress.set, completed / total)
-            enqueue_ui(self.batch_pct_label.configure, text=f"{int((completed/total)*100)}%")
+            # Reset for next item
+            enqueue_ui(self.batch_progress.set, 0.0)
+            enqueue_ui(self.batch_pct_label.configure, text="0%")
 
         enqueue_ui(self.batch_btn.configure, state="normal")
         enqueue_ui(self.btn_cancel_batch.configure, state="disabled")
@@ -839,9 +861,8 @@ class DownloaderApp(ctk.CTk):
             m = PERC_RE.search(line)
             if m:
                 pct = float(m.group(1))/100.0
-                # Approximate overall progress
-                overall = (current_item - 1 + pct) / total_items
-                enqueue_ui(self.playlist_progress.set, overall)
+                # Show current item progress directly
+                enqueue_ui(self.playlist_progress.set, pct)
                 enqueue_ui(self.playlist_pct_label.configure, text=f"{m.group(1)}%") 
             else:
                 enqueue_ui(self._append_log, f"[playlist] {line.strip()}")
