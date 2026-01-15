@@ -24,3 +24,4 @@ Thumbs.db
 # Local binaries (not tracked)
 ffmpeg/
 ytdlp/
+app/config.json

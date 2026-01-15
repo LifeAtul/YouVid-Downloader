@@ -58,7 +58,7 @@ CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.j
 # ---------------------------
 # Defaults / Config
 # ---------------------------
-DEFAULT_DOWNLOAD = r"C:\Users\Dell\Downloads"
+DEFAULT_DOWNLOAD = os.path.join(os.path.expanduser("~"), "Downloads")
 DEFAULT_CONFIG = {
     "download_folder": DEFAULT_DOWNLOAD,
     "theme": "dark",
@@ -266,6 +266,54 @@ def enqueue_ui(fn, *a, **kw):
     ui_queue.put((fn, a, kw))
 
 # ---------------------------
+# Batch Row Component
+# ---------------------------
+class BatchRow(ctk.CTkFrame):
+    def __init__(self, parent, url, delete_cb):
+        super().__init__(parent, fg_color=STYLES["card"], corner_radius=10, border_width=1, border_color=STYLES["border"])
+        self.url = url
+        self.delete_cb = delete_cb
+        self.title_val = "Fetching info..."
+        self.filepath = None
+        self.status = "Pending"
+        
+        self.pack(fill="x", pady=4, padx=5)
+        
+        # Checkbox
+        self.chk_var = ctk.BooleanVar(value=True)
+        self.chk = ctk.CTkCheckBox(self, text="", variable=self.chk_var, width=24, height=24, corner_radius=6, border_width=2, checkbox_width=24, checkbox_height=24)
+        self.chk.pack(side="left", padx=(12, 8), pady=12)
+        
+        # Info
+        info = ctk.CTkFrame(self, fg_color="transparent")
+        info.pack(side="left", fill="x", expand=True, pady=8)
+        
+        self.lbl_title = ctk.CTkLabel(info, text=self.title_val, font=FONTS["bold"], text_color=STYLES["text"], anchor="w")
+        self.lbl_title.pack(fill="x")
+        
+        self.lbl_url = ctk.CTkLabel(info, text=url, font=FONTS["sub"], text_color=STYLES["text_sub"], anchor="w")
+        self.lbl_url.pack(fill="x")
+        
+        # Status
+        self.lbl_status = ctk.CTkLabel(self, text="Waiting", font=FONTS["sub"], text_color=STYLES["text_sub"], width=100, anchor="e")
+        self.lbl_status.pack(side="left", padx=(10, 16))
+        
+        # Delete
+        self.btn_del = ctk.CTkButton(self, text="✕", width=32, height=32, fg_color="transparent", hover_color=STYLES["second"], 
+                                     text_color=STYLES["error"], font=("Arial", 16),
+                                     command=lambda: self.delete_cb(self))
+        self.btn_del.pack(side="right", padx=(0, 8))
+
+    def set_title(self, title):
+        self.title_val = title
+        # truncate if too long
+        if len(title) > 60: title = title[:57] + "..."
+        self.lbl_title.configure(text=title)
+
+    def set_status(self, text, color_key="text_sub"):
+        self.lbl_status.configure(text=text, text_color=STYLES.get(color_key, STYLES["text_sub"]))
+
+# ---------------------------
 # Main App Class
 # ---------------------------
 class DownloaderApp(ctk.CTk):
@@ -402,7 +450,7 @@ class DownloaderApp(ctk.CTk):
         self.folder_entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
         
         ctk.CTkButton(path_row, text="Browse", fg_color=STYLES["second"], hover_color=STYLES["border"], text_color=STYLES["text"], width=80, height=42, corner_radius=10,
-                      command=self.browse_folder).pack(side="right")
+                      command=lambda: self.browse_folder(self.folder_var)).pack(side="right")
 
         # Info & Progress
         self.lbl_title = ctk.CTkLabel(single, text="Ready to download", text_color=STYLES["text"], font=FONTS["bold"])
@@ -434,25 +482,58 @@ class DownloaderApp(ctk.CTk):
 
         # --- Batch Tab ---
         batch = self.tabview.tab("Batch")
-        ctk.CTkLabel(batch, text="URLs (One per line)", text_color=STYLES["text"], font=FONTS["bold"]).pack(anchor="w", pady=(10, 6))
-        self.batch_text = ctk.CTkTextbox(batch, height=160, fg_color=STYLES["second"], text_color=STYLES["text"], font=FONTS["body"], corner_radius=10, border_width=0)
-        self.batch_text.pack(fill="both", expand=True, pady=(0, 10))
         
-        # Batch Info
-        self.lbl_batch_title = ctk.CTkLabel(batch, text="Ready", text_color=STYLES["text"], font=FONTS["bold"])
-        self.lbl_batch_title.pack(anchor="w")
+        # Batch Input Area
+        b_top = ctk.CTkFrame(batch, fg_color="transparent")
+        b_top.pack(fill="x", pady=(0, 10))
         
-        self.batch_progress = ctk.CTkProgressBar(batch, height=10, progress_color=STYLES["accent"], fg_color=STYLES["second"])
-        self.batch_progress.set(0.0)
-        self.batch_progress.pack(fill="x", pady=(5, 5))
+        self.batch_input = ctk.CTkTextbox(b_top, height=80, fg_color=STYLES["second"], text_color=STYLES["text"], font=FONTS["body"], corner_radius=10)
+        self.batch_input.pack(fill="x", side="left", expand=True, padx=(0, 10))
         
-        self.batch_pct_label = ctk.CTkLabel(batch, text="0%", text_color=STYLES["text_sub"], font=FONTS["sub"])
-        self.batch_pct_label.pack(anchor="e")
+        self.btn_add_batch = ctk.CTkButton(b_top, text="Process\nLinks", fg_color=STYLES["accent"], hover_color=STYLES["hover"], 
+                                           text_color="#ffffff", width=100, height=80, corner_radius=10, font=FONTS["bold"],
+                                           command=self.add_batch_links)
+        self.btn_add_batch.pack(side="right")
+
+        # Batch Location
+        ctk.CTkLabel(batch, text="Save Location", text_color=STYLES["text"], font=FONTS["bold"]).pack(anchor="w", pady=(10, 6))
+        b_path_row = ctk.CTkFrame(batch, fg_color="transparent")
+        b_path_row.pack(fill="x", pady=(0, 10))
         
+        self.batch_folder_var = ctk.StringVar(value=cfg.get("download_folder", DEFAULT_DOWNLOAD))
+        self.batch_folder_entry = ctk.CTkEntry(b_path_row, textvariable=self.batch_folder_var, height=42, 
+                                               fg_color=STYLES["second"], border_width=0, text_color=STYLES["text"], font=FONTS["body"], corner_radius=10)
+        self.batch_folder_entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        
+        ctk.CTkButton(b_path_row, text="Browse", fg_color=STYLES["second"], hover_color=STYLES["border"], text_color=STYLES["text"], width=80, height=42, corner_radius=10,
+                      command=lambda: self.browse_folder(self.batch_folder_var)).pack(side="right")
+
+
+        # Separator / Info
+        b_mid = ctk.CTkFrame(batch, fg_color="transparent")
+        b_mid.pack(fill="x", pady=(0, 5))
+        ctk.CTkLabel(b_mid, text="Download List", text_color=STYLES["text"], font=FONTS["bold"]).pack(side="left")
+        self.batch_count_lbl = ctk.CTkLabel(b_mid, text="0 items", text_color=STYLES["text_sub"], font=FONTS["sub"])
+        self.batch_count_lbl.pack(side="left", padx=10)
+        
+        ctk.CTkButton(b_mid, text="Clear All", fg_color="transparent", text_color=STYLES["error"], hover_color=STYLES["second"], 
+                      height=24, width=80, font=FONTS["sub"], command=self.clear_batch).pack(side="right")
+
+        # Scrollable List
+        self.batch_scroll = ctk.CTkScrollableFrame(batch, fg_color="transparent", label_text="")
+        self.batch_scroll.pack(fill="both", expand=True, pady=(0, 10))
+        
+        self.batch_items = []
+
+        # Batch Controls
         b_btn_row = ctk.CTkFrame(batch, fg_color="transparent")
-        b_btn_row.pack(fill="x", pady=(10, 0))
+        b_btn_row.pack(fill="x", pady=(0, 0))
         
-        self.batch_btn = ctk.CTkButton(b_btn_row, text="Download All", fg_color=STYLES["accent"], hover_color=STYLES["hover"], 
+        self.batch_progress = ctk.CTkProgressBar(b_btn_row, height=10, progress_color=STYLES["accent"], fg_color=STYLES["second"])
+        self.batch_progress.set(0.0)
+        self.batch_progress.pack(side="top", fill="x", pady=(0, 10))
+        
+        self.batch_btn = ctk.CTkButton(b_btn_row, text="Download Selected", fg_color=STYLES["accent"], hover_color=STYLES["hover"], 
                                        text_color="#ffffff", font=("Google Sans Code", 15, "bold"), height=48, corner_radius=12,
                                        command=self.start_batch_download)
         self.batch_btn.pack(side="left", fill="x", expand=True, padx=(0, 10))
@@ -468,6 +549,20 @@ class DownloaderApp(ctk.CTk):
         self.playlist_url = ctk.CTkEntry(playlist, placeholder_text="Paste playlist link...", height=42, 
                                          fg_color=STYLES["second"], border_width=0, text_color=STYLES["text"], font=FONTS["body"], corner_radius=10)
         self.playlist_url.pack(fill="x", pady=(0, 20))
+        
+        # Playlist Location
+        ctk.CTkLabel(playlist, text="Save Location", text_color=STYLES["text"], font=FONTS["bold"]).pack(anchor="w", pady=(0, 6))
+        p_path_row = ctk.CTkFrame(playlist, fg_color="transparent")
+        p_path_row.pack(fill="x", pady=(0, 20))
+        
+        self.playlist_folder_var = ctk.StringVar(value=cfg.get("download_folder", DEFAULT_DOWNLOAD))
+        self.playlist_folder_entry = ctk.CTkEntry(p_path_row, textvariable=self.playlist_folder_var, height=42, 
+                                                  fg_color=STYLES["second"], border_width=0, text_color=STYLES["text"], font=FONTS["body"], corner_radius=10)
+        self.playlist_folder_entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        
+        ctk.CTkButton(p_path_row, text="Browse", fg_color=STYLES["second"], hover_color=STYLES["border"], text_color=STYLES["text"], width=80, height=42, corner_radius=10,
+                      command=lambda: self.browse_folder(self.playlist_folder_var)).pack(side="right")
+
         
         self.lbl_pl_title = ctk.CTkLabel(playlist, text="Ready", text_color=STYLES["text"], font=FONTS["bold"])
         self.lbl_pl_title.pack(anchor="w")
@@ -536,10 +631,11 @@ class DownloaderApp(ctk.CTk):
             self.btn_log.configure(text="Hide Logs")
             self.log_visible = True
 
-    def browse_folder(self):
-        folder = filedialog.askdirectory(initialdir=self.folder_var.get())
+    def browse_folder(self, var=None):
+        if var is None: var = self.folder_var
+        folder = filedialog.askdirectory(initialdir=var.get())
         if folder:
-            self.folder_var.set(folder)
+            var.set(folder)
             cfg["download_folder"] = folder
             save_config(cfg)
 
@@ -698,83 +794,188 @@ class DownloaderApp(ctk.CTk):
             enqueue_ui(self._append_log, f"Single download failed (code {rc}).")
 
     # ---------------------------
+    # ---------------------------
+    # Batch Functions
+    # ---------------------------
+    def add_batch_links(self):
+        text = self.batch_input.get("0.0", "end").strip()
+        if not text:
+            return
+        
+        new_urls = [line.strip() for line in text.splitlines() if line.strip()]
+        self.batch_input.delete("0.0", "end")
+        
+        if not new_urls: return
+        
+        # Add rows
+        added_rows = []
+        for url in new_urls:
+            row = BatchRow(self.batch_scroll, url, self.remove_batch_row)
+            self.batch_items.append(row)
+            added_rows.append(row)
+            
+        self._update_batch_count()
+        
+        # Verify in background
+        threading.Thread(target=self._batch_metadata_worker, args=(added_rows,), daemon=True).start()
+
+    def remove_batch_row(self, row):
+        if row in self.batch_items:
+            self.batch_items.remove(row)
+        row.destroy()
+        self._update_batch_count()
+
+    def clear_batch(self):
+        for row in self.batch_items:
+            row.destroy()
+        self.batch_items.clear()
+        self._update_batch_count()
+
+    def _update_batch_count(self):
+        self.batch_count_lbl.configure(text=f"{len(self.batch_items)} items")
+
+    def _batch_metadata_worker(self, rows):
+        folder = cfg.get("download_folder", DEFAULT_DOWNLOAD)
+        
+        for row in rows:
+            if not row.winfo_exists(): continue
+            
+            # Fetch info: Title and Filename
+            # output template to match what we save
+            out_tmpl = os.path.join(folder, "%(title)s.%(ext)s")
+            
+            # Use --print to get title and filename safely
+            # IMPORTANT: Match download args so we predict the exact filename (e.g. .mp4)
+            cmd = [YTDLP, "-f", "bestvideo+bestaudio", "--merge-output-format", "mp4", 
+                   "--print", "%(title)s|%(filename)s", "-o", out_tmpl, "--no-warnings", row.url]
+            
+            try:
+                # We use subprocess directly to avoid blocking Main DownloadManager or mixing streams
+                creationflags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
+                res = subprocess.run(cmd, capture_output=True, text=True, creationflags=creationflags)
+                
+                if res.returncode == 0:
+                    output = res.stdout.strip()
+                    if "|" in output:
+                        title, filename = output.split("|", 1)
+                        title = title.strip()
+                        filename = filename.strip()
+                        
+                        enqueue_ui(row.set_title, title)
+                        
+                        # Check existence
+                        if os.path.exists(filename):
+                            enqueue_ui(row.set_status, "Exists", "success")
+                            enqueue_ui(lambda r=row: r.chk_var.set(False)) # Uncheck if exists
+                        elif os.path.exists(filename + ".part") or os.path.exists(filename + ".ytdl"):
+                            enqueue_ui(row.set_status, "Incomplete", "accent")
+                            # Keep checked so user can resume/finish
+                        else:
+                            enqueue_ui(row.set_status, "Ready", "text_sub")
+                    else:
+                        enqueue_ui(row.set_title, output) # fallback
+                        enqueue_ui(row.set_status, "Ready", "text_sub")
+                else:
+                    enqueue_ui(row.set_status, "Error", "error")
+            except Exception as e:
+                enqueue_ui(row.set_status, "Error", "error")
+
     def start_batch_download(self):
         threading.Thread(target=self._batch_worker, daemon=True).start()
 
     def _batch_worker(self):
-        text = self.batch_text.get("0.0", "end").strip()
-        if not text:
-            messagebox.showerror("Error", "Paste at least one URL (one per line).")
+        # Filter checked items
+        to_download = [r for r in self.batch_items if r.chk_var.get()]
+        total = len(to_download)
+        
+        if total == 0:
+            messagebox.showinfo("Info", "No items selected.")
             return
-        urls = [u.strip() for u in text.splitlines() if u.strip()]
-        total = len(urls)
-        folder = self.folder_var.get().strip() or cfg.get("download_folder", DEFAULT_DOWNLOAD)
+
+        folder = self.batch_folder_var.get().strip() or cfg.get("download_folder", DEFAULT_DOWNLOAD)
         os.makedirs(folder, exist_ok=True)
         cfg["download_folder"] = folder
         save_config(cfg)
 
         if not os.path.isfile(YTDLP) or not os.path.isfile(FFMPEG):
-            messagebox.showerror("Error", "yt-dlp.exe or ffmpeg.exe missing.")
+            messagebox.showerror("Error", "Tools missing.")
             return
 
         enqueue_ui(self._append_log, f"Starting batch download ({total} items)...")
         enqueue_ui(self.batch_btn.configure, state="disabled")
         enqueue_ui(self.btn_cancel_batch.configure, state="normal")
-        completed = 0
-        enqueue_ui(self.batch_pct_label.configure, text="0%")
+        enqueue_ui(self.batch_progress.set, 0.0)
 
-        for idx, url in enumerate(urls, start=1):
-            if self.batch_mgr.cancelled:
-                break
+        completed_count = 0
+        
+        for idx, row in enumerate(to_download, start=1):
+             if self.batch_mgr.cancelled:
+                 break
+             
+             enqueue_ui(row.set_status, "Downloading...", "accent")
+             enqueue_ui(self._append_log, f"Batch [{idx}/{total}]: {row.title_val}")
+             
+             # Highlight row? maybe not needed, status is enough
+             
+             output = os.path.join(folder, "%(title)s.%(ext)s")
+             cmd = [YTDLP, "-f", "bestvideo+bestaudio", "--ffmpeg-location", FFMPEG, "--merge-output-format", "mp4", "-o", output, row.url]
 
-            enqueue_ui(self._append_log, f"[{idx}/{total}] Starting: {url}")
-            enqueue_ui(self.lbl_batch_title.configure, text=f"Item {idx}/{total}: Fetching...")
-            
-            output = os.path.join(folder, "%(title)s.%(ext)s")
-            cmd = [YTDLP, "-f", "bestvideo+bestaudio", "--ffmpeg-location", FFMPEG, "--merge-output-format", "mp4", "-o", output, url]
+             current_stage = "Init"
+             
+             def line_cb(line):
+                 nonlocal current_stage
+                 
+                 # Detect stage changes
+                 if "[download] Destination:" in line:
+                     try:
+                         fname = line.split("Destination:", 1)[1].strip()
+                         ext = os.path.splitext(fname)[1].lower()
+                         if ext in ['.mp4', '.webm', '.mkv', '.avi', '.mov']:
+                             current_stage = "Video"
+                         elif ext in ['.m4a', '.mp3', '.opus', '.aac', '.wav']:
+                             current_stage = "Audio"
+                     except: pass
+                 
+                 elif "[Merger]" in line:
+                     current_stage = "Merging"
+                     enqueue_ui(row.set_status, "Merging...", "accent")
+                     return
 
-            def line_cb(line):
-                # Parse Title
-                if "[download] Destination:" in line:
+                 elif "has already been downloaded" in line:
+                     current_stage = "Exists"
+                     enqueue_ui(row.set_status, "Exists", "success")
+                     return
+
+                 # Update Percentage with Stage
+                 m = PERC_RE.search(line)
+                 if m:
                     try:
-                        fname = line.split("Destination:", 1)[1].strip()
-                        fname = os.path.basename(fname)
-                        fname = os.path.splitext(fname)[0]
-                        enqueue_ui(self.lbl_batch_title.configure, text=f"Item {idx}/{total}: {fname}")
-                    except:
-                        pass
-                
-                m = PERC_RE.search(line)
-                if m:
-                    try:
-                        pct = float(m.group(1))/100.0
-                        # Show current item progress directly
-                        enqueue_ui(self.batch_progress.set, pct)
-                        enqueue_ui(self.batch_pct_label.configure, text=f"{m.group(1)}%")
-                    except:
-                        pass
-                else:
-                    enqueue_ui(self._append_log, f"[{idx}/{total}] {line.strip()}")
+                        pct = float(m.group(1))
+                        # Display: "Video: 45%" or "Audio: 90%"
+                        status_text = f"{current_stage}: {pct:.0f}%"
+                        enqueue_ui(row.set_status, status_text, "accent")
+                    except: pass
+                 
+                 enqueue_ui(self._append_log, line.strip())
 
-            rc, msg = self.batch_mgr.start(cmd, line_callback=line_cb)
-            
-            if rc == 0:
-                completed += 1
-                enqueue_ui(self._append_log, f"[{idx}/{total}] Completed.")
-            elif rc == -1:
-                enqueue_ui(self._append_log, f"[{idx}/{total}] Cancelled.")
-                break
-            else:
-                enqueue_ui(self._append_log, f"[{idx}/{total}] Failed (code {rc}).")
-            
-            # Reset for next item
-            enqueue_ui(self.batch_progress.set, 0.0)
-            enqueue_ui(self.batch_pct_label.configure, text="0%")
+             rc, msg = self.batch_mgr.start(cmd, line_callback=line_cb)
+             
+             if rc == 0:
+                 enqueue_ui(row.set_status, "Done", "success")
+                 enqueue_ui(lambda r=row: r.chk_var.set(False))
+                 completed_count += 1
+             elif rc == -1:
+                 enqueue_ui(row.set_status, "Cancelled", "error")
+                 break
+             else:
+                 enqueue_ui(row.set_status, "Failed", "error")
+
+             # Update global progress bar (fraction of items completed)
+             enqueue_ui(self.batch_progress.set, idx / total)
 
         enqueue_ui(self.batch_btn.configure, state="normal")
         enqueue_ui(self.btn_cancel_batch.configure, state="disabled")
-        enqueue_ui(self.lbl_batch_title.configure, text="Batch Finished")
-        enqueue_ui(self._append_log, f"Batch finished: {completed}/{total} succeeded.")
+        enqueue_ui(self._append_log, f"Batch finished: {completed_count}/{total} done.")
         
         if cfg.get("auto_open_folder", True):
             try: os.startfile(folder)
@@ -789,7 +990,7 @@ class DownloaderApp(ctk.CTk):
         if not url:
             messagebox.showerror("Error", "Please paste a playlist URL.")
             return
-        folder = self.folder_var.get().strip() or cfg.get("download_folder", DEFAULT_DOWNLOAD)
+        folder = self.playlist_folder_var.get().strip() or cfg.get("download_folder", DEFAULT_DOWNLOAD)
         os.makedirs(folder, exist_ok=True)
         cfg["download_folder"] = folder
         save_config(cfg)
